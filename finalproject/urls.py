@@ -22,4 +22,5 @@ urlpatterns = [
     url(r'^', include('resumeranking.urls')),
     url(r'^index2/', include('resumeranking.urls')),
     url(r'^choices/', include('resumeranking.urls')),
+    url(r'^logout/', include('resumeranking.urls')),
 ]

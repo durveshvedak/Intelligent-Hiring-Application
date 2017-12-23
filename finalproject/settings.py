@@ -25,7 +25,7 @@ SECRET_KEY = 'tj4cra(rp&u_=&(dbf7wgi#e7$y7pa&&j)6#9z!(^z6&#o*a-l'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['resumeranking-env.us-east-1.elasticbeanstalk.com','127.0.0.1','127.0.0.1:8000/resumeranking/']
 
 
 # Application definition
@@ -119,3 +119,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATIC_ROOT=os.path.join(BASE_DIR,'static/')

@@ -22,6 +22,10 @@ arts=[]
 management=[]
 programming=[]
 engineering=[]
+l1=[]
+scorelist=[]
+final=[]
+setl2=[]
 
 
 @csrf_exempt
@@ -30,13 +34,13 @@ engineering=[]
 #host='https://search-twitterdata-7pjdmgnouvfgjif4lryzj3pgdi.us-east-1.es.amazonaws.com/twitter/_search'
 
 def index(request):
-	import boto3
-	dynamodb = boto3.resource('dynamodb')
-	table = dynamodb.Table('users')
-	#return render(request,'upload.html')
-	if request.method == 'GET':
-		return render(request,'pdffile.html')
-	if request.method == 'POST':
+    import boto3
+    dynamodb = boto3.resource('dynamodb',region_name='us-east-1')
+    table = dynamodb.Table('users')
+    #return render(request,'upload.html')
+    if request.method == 'GET':
+        return render(request,'index.html')
+    if request.method == 'POST':
 
          name2 = request.POST['login']
          name3=str(name2)
@@ -51,21 +55,21 @@ def index(request):
              s=''
              s=email+password
              response = table.get_item(
-				    Key={
-				        'userid': email
-				    }
-				)
+                    Key={
+                        'userid': email
+                    }
+                )
              if(len(response)==2): 
-             	item = response['Item']['password']
-             	if(password==item):
-             		return render(request,"upload.html")
-             	else:
-             		print("Invalid password")
-             		return render(request,'index.html',{'s':["invalid password",'0']})
+                item = response['Item']['password']
+                if(password==item):
+                    return render(request,"upload.html")
+                else:
+                    print("Invalid password")
+                    return render(request,'index.html',{'s':["invalid password",'0']})
              else:
-             	print("Invalid Username")
-             	s1="invalid username"
-             	return render(request,'index.html',{'s':["invalid username",'0']})
+                print("Invalid Username")
+                s1="invalid username"
+                return render(request,'index.html',{'s':["invalid username",'0']})
              #return render(request,"value.html",{'s':s})
          if(name2==signup):
              first_name=request.POST.get('first','')
@@ -74,13 +78,13 @@ def index(request):
              password = request.POST.get('newpassword','')
              print ("first name is ", first_name, "last name is ", last_name)
              table.put_item(
-				   Item={
-				        'userid': email,
-				        'first_name': first_name,
-				        'last_name': last_name,
-				        'password': password,
-				    }
-				)
+                   Item={
+                        'userid': email,
+                        'first_name': first_name,
+                        'last_name': last_name,
+                        'password': password,
+                    }
+                )
              #s=''
              #s=first_name+last_name
              #c={}
@@ -91,31 +95,31 @@ def index(request):
 
 @csrf_exempt
 def index2(request):
-	from boto.s3.connection import S3Connection
-	from boto.s3.key import Key
-	import boto3 
-	import boto
-	import sys, os
-	import zipfile
-	s3 = boto3.resource('s3')
-	myfile = request.FILES['file']
-	file_name=myfile.name
-	fs = FileSystemStorage(location='resumeranking/ResumeZip/')
-	filename = fs.save(myfile.name, myfile)
-	s3.meta.client.upload_file('resumeranking/ResumeZip/Archive.zip', 'resumezipbucket2', 'Archive.zip')
-	LOCAL_PATH = 'resumeranking/FromS3/'
-	conn = S3Connection('','')
-	bucket = conn.get_bucket('resumezipbucket2')
-	l = []
-	bucket_list = bucket.list()
-	for l in bucket_list:
-		keyString = str(l.key)
-		if not os.path.exists(LOCAL_PATH + keyString):
-			l.get_contents_to_filename(LOCAL_PATH + keyString)
-	zip_ref = zipfile.ZipFile(LOCAL_PATH+'/'+file_name, 'r')
-	zip_ref.extractall('resumeranking/ResumeSamples/')
-	zip_ref.close()
-	return render(request,"choose.html")
+    from boto.s3.connection import S3Connection
+    from boto.s3.key import Key
+    import boto3 
+    import boto
+    import sys, os
+    import zipfile
+    s3 = boto3.resource('s3',region_name='us-east-1')
+    myfile = request.FILES['file']
+    file_name=myfile.name
+    fs = FileSystemStorage(location='resumeranking/ResumeZip/')
+    filename = fs.save(myfile.name, myfile)
+    s3.meta.client.upload_file('resumeranking/ResumeZip/Archive.zip', 'resumezipbucket2', 'Archive.zip')
+    LOCAL_PATH = 'resumeranking/FromS3/'
+    conn = S3Connection('AKIAIWHOB6Y4NQFIBHKA','kAXXDJrkEI1jNQOmzbUV9AkcOOSjQJ5CdXkS2fTH')
+    bucket = conn.get_bucket('resumezipbucket2')
+    l = []
+    bucket_list = bucket.list()
+    for l in bucket_list:
+        keyString = str(l.key)
+        if not os.path.exists(LOCAL_PATH + keyString):
+            l.get_contents_to_filename(LOCAL_PATH + keyString)
+    zip_ref = zipfile.ZipFile(LOCAL_PATH+'/'+file_name, 'r')
+    zip_ref.extractall('resumeranking/ResumeSamples/')
+    zip_ref.close()
+    return render(request,"choose.html")
     #return render(request,"upload.html")
     #return render_template('upload.html', field='_all')
     
@@ -163,6 +167,7 @@ def choices(request):
     import urllib
     # import PyPDF2
     import re, collections
+    import boto3
 
     #from tex import latex2pdf
     import os
@@ -393,6 +398,18 @@ def choices(request):
         fin = financeScore(resume, finWords)
         man = managementScore(resume, manWords)
         art = artsScore(resume, artWords)
+        global final
+        final = []
+        final.append('Software score: '+str(cs))
+        final.append('Engineering Score: '+str(eng))
+        final.append('Financial Score: '+str(fin))
+        final.append('Management Score: '+str(man))
+        final.append('Arts Score: '+str(art))
+        average = getCategoriesAverage(resume)
+        final.append('Avergae Score: '+str(average))
+        oall=overall(resume)
+        final.append('Overall Score: '+str(oall))
+        final.append('Programming Score: '+str(programmingScore1(resume,progWords)))
 
         fout = open("results.tex", "a")
         fout.write("\\textbf{Software:} " + str(cs) + " (out of 25)\\\\\n\
@@ -468,6 +485,14 @@ def choices(request):
 
     ## Nazli Uzgur
 
+    def publish(scorelist):
+        sns = boto3.resource('sns',region_name='us-east-1', aws_access_key_id='AKIAIWHOB6Y4NQFIBHKA', aws_secret_access_key='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')
+        topic = sns.Topic('arn:aws:sns:us-east-1:727407189833:notifications')
+        response = topic.publish(
+            Message=str(scorelist),
+            Subject='Resume Ranking'
+        )
+
 
 
 
@@ -513,7 +538,7 @@ def choices(request):
 
     def gpaScoreCalculator(gpa):
         gpa_unweighted = gpa / 4.00
-        gpa_scaled = gpa_unweighted * 10
+        gpa_scaled = gpa_unweighted
         return gpa_scaled
 
 
@@ -553,6 +578,8 @@ def choices(request):
         else:
             fout.write("\\textbf{GPA: " + str(gpa) + "}\\\\\n")
         fout.close()
+        global final               
+        final.append('GPA Score: '+str(score))
         return score
 
 
@@ -637,6 +664,7 @@ def choices(request):
                       "New Mexico State University", "University of Colorado-Denver"]
         short_words = ["university", "for", "and", "get", "the", "art", "ice", "town", "park", "van", "los"]
         i = 0
+        global final
         fout = open("results.tex", "a")
         for college in university:
             for word in word_tokens:
@@ -651,6 +679,7 @@ def choices(request):
         score = ((200 - i) / 200.0) * 15
         fout.write(" \\textbf{score:} " + str(tenUniversity(score)) + "\\\\\n")
         fout.close()
+        final.append('University Score: '+str(score))
         return score
 
 
@@ -729,9 +758,11 @@ def choices(request):
 
         # get email
         email = ""
+        global final
         for token in word_tokens:
             if "@" in token:
                 email = token
+                final.append('Email: '+str(email))
                 break
 
         fout = open("results.tex", "a")
@@ -765,6 +796,9 @@ def choices(request):
         score = category_score + overall_score + programming_score + \
                 gpa_score + college_score + word_count_score + \
                 degree_score + section_score
+        global scorelist
+        scorelist.append(final)
+        scorelist.sort(key=lambda x:x[6],reverse=True)
 
         fout = open("results.tex", "a")
         fout.write("\\textbf{Best category: } " + cat + "\\\\\n\
@@ -779,6 +813,38 @@ def choices(request):
 
     (resume,cats) = init()
 
+    def printlist():
+        global scorelist
+        j=1
+        l4=[]
+        s=''
+        s3=''
+        s1=set(scorelist[len(scorelist)-1])
+        print("!!!!!!!!!!!!!!!!!!!")
+        for i in scorelist:
+            print(j)
+            print(len(i))
+            print(i)
+            if(len(i)>10):
+                print(i[10])
+                s=s+str(i[10])+"\n"
+                #l4.append[s]
+                #print("l4",l4)
+            for k in i:
+                s3=s3+k+"\n"
+            
+            j=j+1
+            #l4.append[i[len(i)-1]]
+            s3=s3+"\n"+"\n"+"\n"
+        print("!!!!!!!!!!!!!!!!!!!")
+        print(s)
+        publish(s)
+        printlist2(s3)
+
+    def printlist2(s3):
+        with open("resumeranking/static/css/hello.txt",'a+') as f:
+            f.write(s3)
+
     if type(resume) == list:
         for i in range(len(resume)):
             print((main(resume[i], cats)))
@@ -786,7 +852,8 @@ def choices(request):
         fout.write("\\end{document}")
         fout.close()
         #subprocess.call('/Library/TeX/texbin/pdflatex', 'results.tex', shell=False)
-        os.system("/Library/TeX/texbin/pdflatex results.tex")
+        #os.system("/Library/TeX/texbin/pdflatex results.tex")
+        printlist()
 
 
     elif resume != "":
@@ -797,7 +864,74 @@ def choices(request):
         #proc = subprocess.Popen(['pdflatex', 'results.tex'])
         #proc.communicate()
         #subprocess.call('/Library/TeX/texbin/pdflatex', 'results.tex')
-        os.system("/Library/TeX/texbin/pdflatex results.tex")
+        #os.system("/Library/TeX/texbin/pdflatex results.tex")
+        printlist()
+
+    #source="hello.txt"
+    #dest="resumeranking/static/Pdf/hello.txt"
+    #os.rename(source,dest)
 
     return render(request,"pdffile.html")
     #return render(request,"value.html",{'s':request.POST.getlist('finance2')})
+
+
+@csrf_exempt
+def logout(request):
+    import boto3
+    import os
+
+
+
+    folder = 'resumeranking/ResumeZip'
+    for the_file in os.listdir(folder):
+        file_path = os.path.join(folder, the_file)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+               
+           
+
+            #elif os.path.isdir(file_path): shutil.rmtree(file_path)
+        except Exception as e:
+            print(e)
+           
+    folder = 'resumeranking/ResumeSamples'
+    for the_file in os.listdir(folder):
+        file_path = os.path.join(folder, the_file)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+           
+               
+            #elif os.path.isdir(file_path): shutil.rmtree(file_path)
+        except Exception as e:
+            print(e)
+           
+    folder = 'resumeranking/FromS3'
+    for the_file in os.listdir(folder):
+        file_path = os.path.join(folder, the_file)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+           
+               
+            #elif os.path.isdir(file_path): shutil.rmtree(file_path)
+        except Exception as e:
+            print(e)
+           
+    #os.remove("resumeranking/static/css/hello.txt")
+    #f=open("resumeranking/static/css/hello.txt",'r+')
+    #f.truncate(f)
+    #folder = 'resumeranking/static/Pdf'
+    #for the_file in os.listdir(folder):
+        #file_path = os.path.join(folder, the_file)
+        #try:
+            #if os.path.isfile(file_path):
+              #  os.unlink(file_path)
+            #elif os.path.isdir(file_path): shutil.rmtree(file_path)
+        #except Exception as e:
+           # print(e)
+
+    client = boto3.client('s3',region_name='us-east-1')
+    client.delete_object(Bucket='resumezipbucket2', Key='Archive.zip')
+    return render(request,'index.html')
