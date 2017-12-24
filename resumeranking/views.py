@@ -108,7 +108,7 @@ def index2(request):
     filename = fs.save(myfile.name, myfile)
     s3.meta.client.upload_file('resumeranking/ResumeZip/Archive.zip', 'resumezipbucket2', 'Archive.zip')
     LOCAL_PATH = 'resumeranking/FromS3/'
-    conn = S3Connection('AKIAIWHOB6Y4NQFIBHKA','kAXXDJrkEI1jNQOmzbUV9AkcOOSjQJ5CdXkS2fTH')
+    conn = S3Connection('','')
     bucket = conn.get_bucket('resumezipbucket2')
     l = []
     bucket_list = bucket.list()
@@ -486,7 +486,7 @@ def choices(request):
     ## Nazli Uzgur
 
     def publish(scorelist):
-        sns = boto3.resource('sns',region_name='us-east-1', aws_access_key_id='AKIAIWHOB6Y4NQFIBHKA', aws_secret_access_key='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')
+        sns = boto3.resource('sns',region_name='us-east-1', aws_access_key_id='', aws_secret_access_key='')
         topic = sns.Topic('arn:aws:sns:us-east-1:727407189833:notifications')
         response = topic.publish(
             Message=str(scorelist),
