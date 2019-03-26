@@ -1,2 +1,3 @@
-# Cloud-Final-Project
-Fall 2017 Cloud Project
+# Cloud Based Django Project
+Djano web app to aid recruiters to filter thousands of resumes 
+and match skills with candidates qualifications
